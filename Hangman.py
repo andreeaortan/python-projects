@@ -1,4 +1,4 @@
-
+""" This is a simple hangman game """
 
 pics=["""\t\t _____
         |     |
