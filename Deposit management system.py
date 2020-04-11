@@ -164,7 +164,6 @@ capsuna.intrari(20, "2019-06-30")
 
 capsuna.iesiri(25, "2019-06-23")
 capsuna.iesiri(2, "2019-07-01")
-rosie.exp("2020-01-01")
 rosie.fisap()
 cartof.fisap()
 banana.fisap()
