@@ -1,6 +1,8 @@
+""" Program with a GUI made with the Tkinter module that allows the user to insert the city for finding out the weather or
+the zipcode for finding out the air quality ( API works only with zipcodes from US )
+"""
+
 from tkinter import *
-# API weather key:
-# a600a417c7c47c34b9f84894538fda7b
 window = Tk()
 window.geometry("600x300")
 
@@ -8,7 +10,7 @@ def lookWeather():
     import requests
     import json
     try:
-        api_request = requests.get("http://api.openweathermap.org/data/2.5/weather?units=metric&q=" + city.get() + "&appid=a600a417c7c47c34b9f84894538fda7b")
+        api_request = requests.get("http://api.openweathermap.org/data/2.5/weather?units=metric&q=" + city.get() + "&YOUR API KEY")
         api = json.loads(api_request.content)
         city_ = api['name']
         country = api['sys']['country']
@@ -27,7 +29,7 @@ def lookAir():
     import json
     try:
         api_request = requests.get(
-            "http://www.airnowapi.org/aq/observation/zipCode/current/?format=application/json&zipCode=" + city.get() + "&distance=5&API_KEY=C8FA690B-81D3-438B-802D-68E31F34316C")
+            "http://www.airnowapi.org/aq/observation/zipCode/current/?format=application/json&zipCode=" + city.get() + "&distance=5&YOUR API KEY")
         api = json.loads(api_request.content)
         city_ = api[0]['ReportingArea']
         quality = api[0]['AQI']
