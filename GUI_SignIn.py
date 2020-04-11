@@ -1,3 +1,8 @@
+
+""" This is a program with a GUI made with the Tkinter module that allows the user to LogIn or create a new account.
+All the information will pe stored in a MySQL databases and the user will also get a confirmation email
+"""
+
 from tkinter import *
 import mysql.connector
 
