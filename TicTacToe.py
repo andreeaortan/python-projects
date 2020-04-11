@@ -1,3 +1,4 @@
+""" This is a tic-tac-toe game that can be played in 2 players """ 
 import random
 
 board = {
