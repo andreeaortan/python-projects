@@ -46,7 +46,7 @@ pics=["""\t\t _____
 
 def play():
 
-    word = "carantina"
+    word = "#introduce word here
     right = ['_'] * len(word)
     wrong = ''
 
