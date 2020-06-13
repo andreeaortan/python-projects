@@ -1,0 +1,355 @@
+""" 
+This is a management system for a railway station. 
+It was made using the tkinter module for the GUI, mysql databases, smtpb module for sending emails and data structures.
+It allows the user to log in or create a new account if they don't have one. All the information about the new user will be stored
+in a mysql database called "railway_manager". 
+After the log in, the user can enter the confirmation number of a reservation for more details about it or make a new one.
+When making a reservation the user will be asked:
+- departing station
+- end station
+- he can pick a date from the calendar widget
+- type of the ticket
+- full name
+after all of these are completed the user gets a random seat number.
+After the reservation is finished the user will recieve an email with a confirmation and a reservation number.
+
+it still has a few bugs that need to be fixed but i will do that when the time allows me 
+"""
+
+from tkinter import *
+import mysql.connector
+import random
+import smtplib
+import tkinter as tk
+from tkinter import ttk
+from tkcalendar import DateEntry
+
+db = mysql.connector.connect(
+    host="localhost",
+    user="root",
+    passwd="0000"
+)
+cursor = db.cursor()
+
+def logIn():
+    cursor.execute("USE railway_manager")
+    cursor.execute("SELECT email FROM users")
+    emails = {u[0] for u in cursor.fetchall()}
+    if email.get() in emails:
+        cursor.execute(f"SELECT password FROM users WHERE email='{email.get()}' ")
+        passwords = {p[0] for p in cursor.fetchall()}
+        if password.get() in passwords:
+            global copy
+            copy=email.get()
+            window.destroy()
+            global loggedin
+            loggedin = Tk()
+            loggedin.geometry('500x200')
+
+            welcome_frame=LabelFrame(loggedin,text="Welcome to the RAILWAY STATION !")
+            welcome_frame.pack()
+            global res_code_entry
+            res_code = Label(welcome_frame, text="Reservation Number")
+            res_code.grid(row=1, column=1)
+            res_code_entry = Entry(welcome_frame)
+            res_code_entry.grid(row=1, column=2)
+            space_labelc1 = Label(welcome_frame,text="  \t")
+            space_labelc1.grid(row=1,column=3)
+            space_labelr1 = Label(welcome_frame,text="\n")
+            space_labelr1.grid(row=0)
+            details_btn = Button(welcome_frame, text="Details",command=details)
+            details_btn.grid(row=1,column=4)
+            res_lbl = Label(welcome_frame,text="Don't have any reservations? ")
+            res_lbl.grid(row=3,column=2)
+            space_labelr2=Label(welcome_frame,text="   ")
+            space_labelr2.grid(row=2)
+            make_reservation_btn = Button(welcome_frame,text="Make a reservation", command=make_reservation)
+            make_reservation_btn.grid(row=4,column=2)
+
+        else:
+            fail = Tk()
+            failed = Label(fail, text="Username or Password incorect! ")
+            failed.grid(row=4, column=4)
+    else:
+        fail = Tk()
+        failed = Label(fail, text="Username or Password incorect! ")
+        failed.grid(row=4, column=4)
+
+
+def signUp():
+    window.destroy()
+    global window2
+    window2=Tk()
+    window2.geometry('400x400')
+
+    window2_frame = LabelFrame(window2, text="Create an account",)
+    window2_frame.pack()
+
+
+    global firstName, lastName, sex, city, emailUp, passwordUp
+
+
+    firstName_label = Label(window2_frame,text="First Name", padx=3, pady=3)
+    firstName_label.grid(column=1, row=1)
+
+    firstName = Entry(window2_frame)
+    firstName.grid(column=2,row=1)
+
+    lastName_label = Label(window2_frame, text="Last Name",padx=3, pady=3)
+    lastName_label.grid(column=1, row=2)
+
+    lastName = Entry(window2_frame)
+    lastName.grid(column=2,row=2)
+
+    sex_label = Label(window2_frame, text="Sex",padx=3, pady=3)
+    sex_label.grid(column=1, row=4)
+
+    sex=Entry(window2_frame)
+    sex.grid(column=2,row=4)
+
+    city_label = Label(window2_frame, text="City",padx=3,pady=3)
+    city_label.grid(column=1,row=5)
+
+    city=Entry(window2_frame)
+    city.grid(column=2,row=5)
+
+    email_label = Label(window2_frame, text="Email address",padx=3, pady=3)
+    email_label.grid(column=1, row=6)
+
+    emailUp=Entry(window2_frame)
+    emailUp.grid(column=2,row=6)
+
+    password_label = Label(window2_frame, text="Password",padx=3, pady=3)
+    password_label.grid(column=1, row=7)
+
+    passwordUp=Entry(window2_frame,show="*")
+    passwordUp.grid(column=2,row=7)
+
+    signUpButton= Button(window2_frame,text="Sign Up",command=Up)
+    signUpButton.grid(column=2, row=8)
+
+    window2.mainloop()
+
+
+def Up():
+    congrats_window=Tk()
+    congrats_window.geometry('600x200')
+
+
+    cursor.execute("CREATE DATABASE IF NOT EXISTS railway_manager")
+    cursor.execute("USE railway_manager")
+    cursor.execute("CREATE TABLE IF NOT EXISTS users(id INT(5) PRIMARY KEY, last_name VARCHAR(255), first_name VARCHAR(255), sex CHAR(1), city VARCHAR(255), email VARCHAR(255), password VARCHAR(255))")
+    id_user = ""
+    num = '1234567890'
+    for i in range(5):
+        id_user += random.choice(num)
+    id_user_int=int(id_user)
+    cursor.execute("INSERT INTO users(id, last_name, first_name, sex, city, email, password)\
+    VALUES(%s,%s,%s,%s,%s,%s,%s)",(id_user_int,lastName.get(),firstName.get(),sex.get(),city.get(),emailUp.get(),passwordUp.get()))
+    db.commit()
+    reciver_email = emailUp.get()
+    person=firstName.get()
+    window2.destroy()
+
+    congrats_label = Label(congrats_window, text="Congratualations! You've created an account. Verify your email for confirmation.")
+    congrats_label.grid(row=5, column=5)
+    congrats_window.mainloop()
+    reciver = reciver_email
+    username = "andreeaortan49@gmail.com"
+    psw = 'OSAGAndreea'
+
+    smtpserver = smtplib.SMTP("smtp.gmail.com", 587)
+
+    smtpserver.starttls()
+    smtpserver.login(username, psw)
+    message = f"Hello {person},\nCongrats! You've created an account for the railway station. "
+    smtpserver.sendmail(username, reciver, message)
+
+
+def make_reservation():
+    global res_window
+    res_window = Tk()
+    loggedin.destroy()
+    res_window.geometry('700x550')
+    global res_frame, leaving_dest, end_dest, name, type_ticket,data_entry
+    res_frame = LabelFrame(res_window,text="Make your reservation",padx=5,pady=5)
+    res_frame.pack()
+
+    empty_col = Label(res_frame,text="\t\n\t")
+    empty_col.grid(column=3,row=1)
+
+    leaving_dest_label = Label(res_frame,text="Departure station")
+    leaving_dest_label.grid(column=1,row=1)
+
+    leaving_dest = Entry(res_frame)
+    leaving_dest.grid(column=2, row=1)
+
+    end_dest_label = Label(res_frame,text="End station")
+    end_dest_label.grid(column=4, row=1)
+
+    end_dest = Entry(res_frame)
+    end_dest.grid(column=5, row=1)
+
+    name_label = Label(res_frame, text="Full name")
+    name_label.grid(column=2,row=5)
+
+    name=Entry(res_frame)
+    name.grid(column=3,row=5)
+
+    type_ticket_label = Label(res_frame,text="Type of ticket")
+    type_ticket_label.grid(column=4, row=3)
+
+    type_ticket = ttk.Combobox(res_frame,width=10,textvariable=tk.StringVar)
+    type_ticket['values'] = ('Adult','Senior','Student')
+    type_ticket.grid(column=5,row=3)
+    type_ticket.current(0)
+
+    date_label = Label(res_frame,text="Pick a date")
+    date_label.grid(column=1,row=3)
+
+    data_entry = DateEntry(res_frame)
+    data_entry.grid(column=2, row=3)
+    global choose_btn
+    choose_btn = Button(res_frame, text="Get a seat",command=get_seat)
+    choose_btn.grid(column=5, row=6)
+
+
+def get_seat():
+    choose_btn.config(state=DISABLED)
+    cursor.execute("USE railway_manager")
+    cursor.execute("SELECT nr FROM seat_manager WHERE taken='n'")
+    free = [u[0] for u in cursor.fetchall()]
+    global seat
+    if len(free)==100:
+        no_seat = Label(res_frame, text="No more seats available :(")
+        no_seat.grid(column=3, row=7)
+    else:
+        seat = int(random.choice(free))
+        your_seat = Label(res_frame, text="You got seat no. %d"%seat)
+        your_seat.grid(column=3,row=7)
+        cursor.execute(f"UPDATE seat_manager SET taken='y' WHERE nr={seat}")
+    space_label = Label(res_frame, text="\n")
+    space_label.grid(row=7)
+    global fin_btn
+    fin_btn = Button(res_frame,text="Finish booking",command=finish)
+    fin_btn.grid(column=5, row=8)
+    db.commit()
+
+
+def finish():
+    fin_btn.config(state=DISABLED)
+    done_label = Label(res_window,text="Your booking is confirmed !")
+    done_label.pack()
+    global departure,destination,fullname,date,cod
+    departure = leaving_dest.get()
+    destination = end_dest.get()
+    fullname= name.get()
+    date = data_entry.get()
+    type = type_ticket.get()
+    numbers='1234567890'
+    cod=""
+    for i in range(5):
+        cod+=random.choice(numbers)
+    cursor.execute("USE railway_manager")
+    cursor.execute("INSERT INTO reservations(cod,email,name,departure_station, end_station,date,type,seat) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)",(cod,copy,fullname,departure,destination,date,type,seat))
+    db.commit()
+    confirmation_label =Label(res_window,text="Chueck your email for confirmation on you booking.")
+    confirmation_label.pack()
+
+    username = "andreeaortan49@gmail.com"
+    psw = 'OSAGAndreea'
+    reciver=copy
+    smtpserver = smtplib.SMTP("smtp.gmail.com", 587)
+
+    smtpserver.starttls()
+    smtpserver.login(username, psw)
+    message = f"Hello {fullname},\nYou have a booking on {date}, departing from {departure} arriving in {destination}.\n Booking confirmation no {cod}. "
+    smtpserver.sendmail(username, reciver, message)
+
+
+def details():
+    cod = int(res_code_entry.get())
+    global window_de
+    window_de=Toplevel()
+    window_de.geometry('250x230')
+    cursor.execute("USE railway_manager")
+    cursor.execute(f"SELECT cod FROM reservations WHERE email='{copy}'")
+    coduri = {u[0] for u in cursor.fetchall()}
+    for i in coduri:
+        if i == cod:
+            cursor.execute(f"SELECT * FROM reservations WHERE cod={cod}")
+            detalii =  cursor.fetchall()
+            for i in detalii:
+                name_res=i[2]
+                leaveSt = i[3]
+                endSt = i[4]
+                date_res = i[5]
+                typeTk = i[6]
+                seatTk = i[7]
+
+                window_deFrame = LabelFrame(window_de, text=f"Details about reservation no. {cod}")
+                window_deFrame.pack()
+                reservation_name = Label(window_deFrame, text="Name: ", width=16, anchor=W)
+                reservation_ls = Label(window_deFrame, text="Leaving station: ", width=16, anchor=W)
+                reservation_es = Label(window_deFrame, text="Destination: ", width=16, anchor=W)
+                reservation_date = Label(window_deFrame, text="Date: ", width=16, anchor=W)
+                reservation_type = Label(window_deFrame, text="Ticket type: ", width=16, anchor=W)
+                reservation_seat = Label(window_deFrame, text="Seat no.: ", width=16, anchor=W)
+                reservation_name.grid(row=1, column=0)
+                reservation_ls.grid(row=2, column=0)
+                reservation_es.grid(row=3, column=0)
+                reservation_date.grid(row=4, column=0)
+                reservation_type.grid(row=5, column=0)
+                reservation_seat.grid(row=6, column=0)
+                name_lbl = Label(window_deFrame,text=name_res,width=16,anchor=W)
+                leaveSt_lbl = Label(window_deFrame,text=leaveSt,width=16,anchor=W)
+                endSt_lbl = Label(window_deFrame,text=endSt,width=16,anchor=W)
+                date_res_lbl = Label(window_deFrame,text=date_res,width=16,anchor=W)
+                typeTk_lbl = Label(window_deFrame,text=typeTk,width=16,anchor=W)
+                seatTk_lbl = Label(window_deFrame, text=seatTk,width=16,anchor=W)
+                name_lbl.grid(row=1,column=1)
+                leaveSt_lbl.grid(row=2,column=1)
+                endSt_lbl.grid(row=3,column=1)
+                date_res_lbl.grid(row=4,column=1)
+                typeTk_lbl.grid(row=5,column=1)
+                seatTk_lbl.grid(row=6,column=1)
+
+    close_btn = Button(window_de,text="Close",command=close)
+    close_btn.pack(expand=True)
+    window_de.mainloop()
+
+def close():
+    window_de.destroy()
+
+
+window = Tk()
+window.geometry('450x300')
+details_frame = LabelFrame(window, text="Enter your information down below to LogIn", padx=5,pady=5)
+details_frame.pack()
+
+email_label = Label(details_frame, text="Email address ")
+email_label.grid(column=1, row=1)
+
+password_label = Label(details_frame, text="Password")
+password_label.grid(column=1, row=2)
+
+email = Entry(details_frame)
+email.grid(column=2, row=1)
+
+password = Entry(details_frame,show = '*')
+password.grid(column=2, row=2)
+
+login_button = Button(details_frame,text="Log In",command=logIn)
+login_button.grid(column=2, row=4)
+
+space_label = Label(details_frame, text="\n\n")
+space_label.grid(column=1,row=5)
+
+no_acc = Label(details_frame, text=" Don't have an account?")
+no_acc.grid(column=1,row=6)
+
+signup_button = Button(details_frame, text="Sign Up", command=signUp)
+signup_button.grid(column=2, row=6)
+
+window.mainloop()
+
